@@ -4,8 +4,11 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="description" content="Calculadora de carga de combustible - Viva Aerobus" />
-<meta name="theme-color" content="#00B140" />
+<meta name="theme-color" content="#00AE44" />
 <title>Viva Aerobus · Fuel Loading Calculator</title>
+
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2300AE44'/><path d='M8.5 11 L13.5 21.5 L18.5 11' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/><circle cx='23' cy='9' r='3' fill='%2373C900'/></svg>" />
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2300AE44'/><path d='M8.5 11 L13.5 21.5 L18.5 11' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/><circle cx='23' cy='9' r='3' fill='%2373C900'/></svg>" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,9 +16,10 @@
 
 <style>
   :root {
-    --viva-green: #00B140;
-    --viva-green-dark: #008F33;
-    --viva-green-soft: #E6F7EC;
+    --viva-green: #00AE44;
+    --viva-green-light: #73C900;
+    --viva-green-dark: #008A35;
+    --viva-green-soft: #E6F6EC;
     --viva-magenta: #EC008C;
     --viva-magenta-dark: #BF0070;
     --viva-magenta-soft: #FCE6F2;
@@ -89,12 +93,14 @@
     flex: 0 0 auto;
   }
   .brand-logo {
-    height: 34px;
+    height: 32px;
     width: auto;
     display: block;
     user-select: none;
     -webkit-user-drag: none;
+    flex-shrink: 0;
   }
+  .brand-logo path[data-accent] { fill: var(--viva-green-light); }
   .brand-tag {
     font-family: var(--font-mono);
     font-size: 10px;
@@ -712,21 +718,60 @@
     vertical-align: middle;
   }
 
-  /* ======================== MOBILE ======================== */
+  /* ======================== TABLET ======================== */
+  @media (max-width: 880px) {
+    .topbar-title small { display: none; }
+    .records-head { flex-direction: column; align-items: stretch; }
+    .records-head .actions { margin-top: 12px; }
+  }
+
+  /* ======================== MOBILE (≤720px) ======================== */
   @media (max-width: 720px) {
-    .topbar-inner { padding: 12px 18px; gap: 12px; }
+    .topbar-inner { padding: 10px 16px; gap: 10px; }
     .topbar-divider { display: none; }
-    .topbar-title { font-size: 14px; }
+    .topbar-title { font-size: 13px; flex: 1 1 0; min-width: 0; }
+    .topbar-title small { display: none; }
+    .clock { text-align: right; }
     .clock .time { font-size: 13px; }
-    .brand-logo { height: 26px; }
+    .clock .date { font-size: 9px; letter-spacing: 0.12em; }
+    .brand-logo { height: 24px; }
     .brand-tag { display: none; }
-    main { padding: 22px 16px 48px; gap: 22px; }
-    .calc-inputs, .calc-results { padding: 22px; }
-    .input-grid { grid-template-columns: 1fr; }
-    .stat-row { grid-template-columns: 1fr; }
-    .range-grid { grid-template-columns: 1fr; }
+    main { padding: 20px 14px 40px; gap: 20px; }
+    .section-title { font-size: 26px; }
+    .section-sub { font-size: 14px; }
+    .calc-inputs, .calc-results { padding: 18px; }
+    .input-grid { grid-template-columns: 1fr; gap: 14px; }
+    .input-wrap input { font-size: 20px; padding: 12px 14px; }
+    .stat-row { grid-template-columns: 1fr; gap: 10px; }
+    .stat .value { font-size: 22px; }
+    .range-card { padding: 18px 18px 20px; }
+    .range-grid { grid-template-columns: 1fr; gap: 10px; }
     .range-arrow { display: none; }
-    .actions .btn { flex: 1 1 100%; }
+    .range-num .v { font-size: 44px; }
+    .range-meta { font-size: 10px; gap: 8px; }
+    .actions { gap: 10px; }
+    .actions .btn { flex: 1 1 100%; padding: 14px 18px; font-size: 14px; }
+    table.records thead th, table.records tbody td { padding: 12px 14px; font-size: 12px; }
+    .table-wrap {
+      position: relative;
+      -webkit-overflow-scrolling: touch;
+    }
+    footer.foot { font-size: 10px; letter-spacing: 0.14em; padding: 18px 14px 32px; }
+  }
+
+  /* ======================== SMALL PHONES (≤420px) ======================== */
+  @media (max-width: 420px) {
+    .topbar-inner { padding: 9px 12px; }
+    .brand-logo { height: 22px; }
+    .topbar-title { font-size: 12px; letter-spacing: -0.01em; }
+    .clock .date { display: none; }
+    main { padding: 16px 12px 36px; gap: 18px; }
+    .section-title { font-size: 22px; line-height: 1.1; }
+    .section-sub { font-size: 13px; }
+    .calc-inputs, .calc-results { padding: 16px; }
+    .stat .value { font-size: 20px; }
+    .range-num .v { font-size: 38px; }
+    .range-head { flex-direction: column; align-items: flex-start; gap: 6px; }
   }
 
   /* ======================== MOTION ======================== */
@@ -751,8 +796,13 @@
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand">
-      <img class="brand-logo" alt="Viva Aerobus"
-           src="data:image/png;base64,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" />
+      <svg class="brand-logo" xmlns="http://www.w3.org/2000/svg" viewBox="61 33 459 172" role="img" aria-label="Viva Aerobus">
+        <path d="M134.585 191.479C132.222 198.976 124.973 203.475 115.992 203.475C107.011 203.475 100.393 199.371 97.7928 191.479L61.0791 83.8262H88.2598L116.701 175.378L146.482 83.8262H173.111L134.585 191.479Z" fill="#00AE44"/>
+        <path d="M191.468 203.317V83.8262H216.285V203.317H191.468Z" fill="#00AE44"/>
+        <path d="M308.699 191.479C306.336 198.976 299.087 203.475 290.106 203.475C281.124 203.475 274.507 199.371 271.907 191.479L235.271 83.8262H262.453L290.894 175.378L320.674 83.8262H347.225L308.699 191.479Z" fill="#00AE44"/>
+        <path d="M466.978 200.951H443.343V186.35H442.633C434.755 196.136 422.307 204.976 403.477 204.976C377.715 204.976 348.564 184.376 348.564 143.494C348.564 107.11 374.406 82.7227 405.447 82.7227C424.592 82.7227 436.016 92.7462 442.949 101.901H443.421V86.3532H467.057L466.978 200.951ZM408.598 182.798C426.876 182.798 443.579 167.013 443.658 144.283C443.658 120.291 428.137 104.506 408.914 104.506C384.49 104.506 372.909 124.236 372.909 143.494C372.83 163.225 384.175 182.798 408.598 182.798Z" fill="#00AE44"/>
+        <path data-accent d="M499.437 95.5857C488.171 95.5857 479.032 86.4307 479.032 75.1446V74.0396H477.929C472.493 74.0396 467.372 71.9087 463.511 68.0414C459.651 64.1741 457.523 59.0441 457.523 53.5983C457.523 48.1526 459.651 43.0225 463.511 39.1553C467.372 35.2091 472.493 33.0781 477.929 33.0781H499.437C504.873 33.0781 509.994 35.2091 513.855 39.0763C517.715 42.9436 519.842 48.0737 519.842 53.5194V75.0656C519.842 86.3518 510.703 95.5857 499.437 95.5857ZM477.929 42.6279C475.014 42.6279 472.256 43.7328 470.208 45.7849C468.16 47.8369 467.057 50.5993 467.057 53.5194C467.057 56.4396 468.16 59.2019 470.208 61.254C472.256 63.306 475.014 64.4109 477.929 64.4109H488.565V75.0656C488.565 81.0638 493.449 85.9571 499.437 85.9571C505.425 85.9571 510.31 81.0638 510.31 75.0656V53.5194C510.31 50.5993 509.206 47.8369 507.158 45.7849C505.109 43.7328 502.352 42.6279 499.437 42.6279H477.929Z" fill="#73C900"/>
+      </svg>
       <span class="brand-tag">Flight Operations</span>
     </div>
     <div class="topbar-divider" aria-hidden="true"></div>
