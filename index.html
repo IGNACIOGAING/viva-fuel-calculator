@@ -1106,11 +1106,11 @@
   const STORAGE_KEY = 'viva_fuel_records';
   const MAX_RECORDS = 500;         // tope para no inflar localStorage
 
-  // ====================== Sincronización con Google Sheets ======================
-  // Pegá acá la URL de tu Apps Script Web App (terminada en /exec).
+  // ====================== Sync con SharePoint Excel (vía Power Automate) ======================
+  // Pegá acá la URL del trigger HTTP de tu flow de Power Automate.
   // Si lo dejás vacío, los registros solo se guardan en este dispositivo (modo local).
-  // Ver CONFIGURAR_SHEETS.md para los pasos de setup (5 minutos).
-  const SHEETS_WEBAPP_URL = '';
+  // Ver SETUP_SHAREPOINT.md para los pasos de setup (~10 minutos).
+  const CLOUD_WEBHOOK_URL = '';
   const AUTO_REFRESH_MS   = 30000; // refresca el histórico cada 30s cuando hay nube
 
   // ====================== DOM ======================
@@ -1284,31 +1284,89 @@
     }
   }
 
-  // ====================== Cloud (Google Sheets via Apps Script) ======================
+  // ====================== Cloud (SharePoint Excel via Power Automate) ======================
   function isCloudConfigured() {
-    return typeof SHEETS_WEBAPP_URL === 'string'
-      && /^https:\/\/script\.google\.com\/.+\/exec/.test(SHEETS_WEBAPP_URL);
+    return typeof CLOUD_WEBHOOK_URL === 'string'
+      && /^https:\/\/.+\..+/i.test(CLOUD_WEBHOOK_URL);
+  }
+
+  // El Excel guarda nombres "humanos"; el frontend usa frKg/fobKg/dateTime/etc.
+  // Estas dos funciones traducen entre los dos formatos.
+  function toWire(r) {
+    return {
+      timestamp: r.iso || r.dateTime || '',
+      flight: r.flight || '',
+      fr:      Number.isFinite(r.frKg)    ? r.frKg    : null,
+      fob:     Number.isFinite(r.fobKg)   ? r.fobKg   : null,
+      totalKg: Number.isFinite(r.totalKg) ? r.totalKg : null,
+      density: Number.isFinite(r.density) ? r.density : null,
+      totalL:  Number.isFinite(r.totalL)  ? r.totalL  : null,
+      lowL:    Number.isFinite(r.lowL)    ? r.lowL    : null,
+      highL:   Number.isFinite(r.highL)   ? r.highL   : null,
+      status:  r.status || '',
+      id: String(r.id || '')
+    };
+  }
+
+  function fromWire(r) {
+    const ts = r.timestamp || '';
+    const d  = ts ? new Date(ts) : null;
+    let dateTime = '', iso = '';
+    if (d && isFinite(d.getTime())) {
+      dateTime = fmtDateTime(d);
+      iso = fmtISO(d);
+    } else {
+      dateTime = String(ts);
+      iso = String(ts);
+    }
+    const num = (v) => {
+      if (v === null || v === undefined || v === '') return null;
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    return {
+      id: r.id != null ? r.id : Date.now(),
+      dateTime,
+      iso,
+      flight:  String(r.flight || ''),
+      frKg:    num(r.fr),
+      fobKg:   num(r.fob),
+      totalKg: num(r.totalKg),
+      density: num(r.density),
+      totalL:  num(r.totalL),
+      lowL:    num(r.lowL),
+      highL:   num(r.highL),
+      status:  String(r.status || ''),
+      synced:  true
+    };
+  }
+
+  async function cloudCall(payload) {
+    // text/plain evita el preflight CORS — el flow igual recibe el JSON crudo y lo parsea.
+    const resp = await fetch(CLOUD_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const text = await resp.text();
+    if (!text) return {};
+    try { return JSON.parse(text); }
+    catch (e) {
+      // Power Automate a veces devuelve el body del script doblemente serializado
+      try { return JSON.parse(JSON.parse(text)); } catch (_) { return {}; }
+    }
   }
 
   async function cloudFetchRecords() {
-    const sep = SHEETS_WEBAPP_URL.includes('?') ? '&' : '?';
-    const url = SHEETS_WEBAPP_URL + sep + 'action=list&t=' + Date.now();
-    const resp = await fetch(url, { method: 'GET', cache: 'no-store' });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    return Array.isArray(data && data.records) ? data.records : [];
+    const data = await cloudCall({ action: 'list' });
+    const arr = Array.isArray(data && data.records) ? data.records : [];
+    return arr.map(fromWire);
   }
 
   async function cloudPushRecord(record) {
-    // text/plain evita el preflight CORS — Apps Script igual parsea con JSON.parse
-    const body = JSON.stringify({ action: 'add', record });
-    const resp = await fetch(SHEETS_WEBAPP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: body
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    try { await resp.json(); } catch (e) { /* ignore body */ }
+    const data = await cloudCall({ action: 'add', record: toWire(record) });
+    if (data && data.ok === false) throw new Error(data.error || 'Push failed');
     return true;
   }
 
@@ -1318,7 +1376,7 @@
     const lblEl = cloudStatusEl.querySelector('.lbl');
     if (!lblEl) return;
     if (status === 'syncing')      lblEl.textContent = 'Syncing…';
-    else if (status === 'synced')  lblEl.textContent = 'Synced · cloud';
+    else if (status === 'synced')  lblEl.textContent = 'Synced · SharePoint';
     else if (status === 'error')   lblEl.textContent = 'Offline';
     else                            lblEl.textContent = 'Local mode';
   }
