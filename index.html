@@ -1024,8 +1024,10 @@
         <div class="pilot-session" id="pilotSession">
           <span class="pilot-label">Pilot</span>
           <input id="pilotId" type="text" placeholder="Type your ID (e.g. VB-1234)"
-                 autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" />
-          <span class="pilot-hint">remembered on this device</span>
+                 list="pilot-history" autocomplete="off" autocapitalize="characters"
+                 spellcheck="false" maxlength="24" />
+          <datalist id="pilot-history"></datalist>
+          <span class="pilot-hint" id="pilotHint">remembered on this device</span>
         </div>
         <div class="section-tag">Flight data</div>
         <div class="input-grid">
@@ -1208,7 +1210,9 @@
   const KG_TOLERANCE = 200;        // kg de tolerancia que se suman antes de convertir a litros
   const DISCREPANCY_PCT = 0.0175;  // ±1.75% del rango de discrepancia
   const STORAGE_KEY = 'viva_fuel_records';
-  const PILOT_KEY   = 'viva_fuel_pilot_id'; // ID del piloto en este dispositivo
+  const PILOT_KEY   = 'viva_fuel_pilot_id';      // último Pilot ID usado en este device
+  const PILOTS_KEY  = 'viva_fuel_pilot_history'; // historial (lista) de IDs usados acá
+  const PILOT_HISTORY_MAX = 10;
   const MAX_RECORDS = 500;         // tope para no inflar localStorage
 
   // ====================== Backend compartido (JSONBin.io) ======================
@@ -1224,6 +1228,8 @@
   const $ = (id) => document.getElementById(id);
   const pilotIdEl  = $('pilotId');
   const pilotSessionEl = $('pilotSession');
+  const pilotHintEl    = $('pilotHint');
+  const pilotHistoryEl = $('pilot-history');
   const flightEl  = $('flight');
   const frEl      = $('fr');
   const fobEl     = $('fob');
@@ -1297,14 +1303,55 @@
   }
 
   // ====================== Pilot session ======================
+  // El Pilot ID + el historial de pilotos que han usado este device se guardan
+  // en localStorage. El input usa <datalist> para ofrecer un dropdown nativo
+  // con los IDs previos (útil cuando varios pilotos comparten una tablet).
   function getPilotId() {
     return ((pilotIdEl && pilotIdEl.value) || '').trim().toUpperCase();
   }
+  function readPilotHistory() {
+    try {
+      const raw = localStorage.getItem(PILOTS_KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr.filter((s) => typeof s === 'string' && s.trim()) : [];
+    } catch (e) { return []; }
+  }
+  function writePilotHistory(list) {
+    try { localStorage.setItem(PILOTS_KEY, JSON.stringify(list.slice(0, PILOT_HISTORY_MAX))); }
+    catch (e) { /* ignore */ }
+  }
+  function refreshPilotDatalist() {
+    if (!pilotHistoryEl) return;
+    const list = readPilotHistory();
+    pilotHistoryEl.innerHTML = '';
+    list.forEach((id) => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      pilotHistoryEl.appendChild(opt);
+    });
+  }
+  function updatePilotHint() {
+    if (!pilotHintEl) return;
+    const v = getPilotId();
+    const history = readPilotHistory();
+    if (!v) {
+      pilotHintEl.textContent = history.length
+        ? 'pick from list or type new'
+        : 'remembered on this device';
+      return;
+    }
+    pilotHintEl.textContent = history.includes(v)
+      ? 'remembered on this device'
+      : 'new pilot · will be remembered';
+  }
   function loadPilotId() {
     try {
-      const v = localStorage.getItem(PILOT_KEY) || '';
-      if (pilotIdEl) pilotIdEl.value = v.toUpperCase();
+      const last = localStorage.getItem(PILOT_KEY) || '';
+      if (pilotIdEl) pilotIdEl.value = (last || '').toUpperCase();
     } catch (e) { /* ignore */ }
+    refreshPilotDatalist();
+    updatePilotHint();
   }
   function savePilotId() {
     try {
@@ -1312,6 +1359,19 @@
       if (v) localStorage.setItem(PILOT_KEY, v);
       else localStorage.removeItem(PILOT_KEY);
     } catch (e) { /* ignore */ }
+    updatePilotHint();
+  }
+  function rememberPilotId() {
+    // Llamar después de un save exitoso para que el ID quede en el historial
+    // (evita poblar el datalist con IDs a medio escribir).
+    const v = getPilotId();
+    if (!v) return;
+    try { localStorage.setItem(PILOT_KEY, v); } catch (e) { /* ignore */ }
+    const history = readPilotHistory().filter((id) => id !== v);
+    history.unshift(v);
+    writePilotHistory(history);
+    refreshPilotDatalist();
+    updatePilotHint();
   }
   function setPilotError(hasError) {
     if (pilotSessionEl) pilotSessionEl.classList.toggle('has-error', !!hasError);
@@ -1727,6 +1787,7 @@
       highL: c.high,
       status: 'OK'
     };
+    rememberPilotId();
     showToast('Load logged · ' + flight);
     await addRecord(record);
   }
@@ -1755,6 +1816,7 @@
       highL: null,
       status: 'NO_INFO'
     };
+    rememberPilotId();
     showToast('Incident logged · ' + flight, 'warn');
     await addRecord(record);
   }
