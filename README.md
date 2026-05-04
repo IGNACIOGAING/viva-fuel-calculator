@@ -1,19 +1,37 @@
 # Viva Aerobus · Fuel Loading Calculator
 
-Calculadora de carga de combustible para uso de pilotos de Viva Aerobus.
+Calculadora de carga de combustible para uso de pilotos de Viva Aerobus + vista admin para auditar todos los registros en tiempo real.
+
+## Páginas
+
+| URL | Para quién | Qué hace |
+|---|---|---|
+| `index.html` | Pilotos | Calcula el rango de carga, valida con ground handler, deja registro local + push al backend compartido |
+| `admin.html` | Operaciones / vos | Tabla en tiempo real con TODOS los registros de todos los pilotos, filtros, descarga CSV |
 
 ## Acceso
 
-La aplicación se publica vía GitHub Pages y es accesible desde cualquier navegador (desktop, tablet, mobile). No requiere instalación ni login.
+GitHub Pages, sin login ni instalación. Funciona en cualquier navegador moderno (desktop, tablet, mobile).
 
-## Cómo se usa
+## Cómo se usa (piloto)
 
-1. El piloto ingresa el número de vuelo, FR (KG) y FOB (KG).
-2. Pide la densidad por radio/teléfono al ground handler.
-3. La calculadora devuelve el **rango en litros** (low end / high end, ±1.75%) que el piloto le comunica al ground handler.
-4. Apretando **Registrar carga** queda guardado en la tabla con fecha/hora automática.
-5. Si el ground handler no se comunica, el piloto puede dejar registro con el botón **No me compartieron la info** (solo requiere número de vuelo).
-6. El histórico se descarga como CSV.
+1. Setear el **Pilot ID** la primera vez (queda persistido en el dispositivo).
+2. Ingresar número de vuelo, FR (KG) y FOB (KG).
+3. Pedir la densidad por radio/teléfono al ground handler.
+4. La calculadora devuelve el **rango en litros** (low end / high end, ±1.75%) que el piloto le comunica al ground handler.
+5. Apretar **Log load** → queda guardado local + se sube al backend compartido.
+6. Si el ground handler no se comunica, el piloto deja constancia con **No info from GH** (solo requiere flight number).
+7. El histórico de su dispositivo se descarga como CSV cuando lo necesite.
+
+## Cómo se usa (admin)
+
+1. Abrir `admin.html` (URL: `<base>/admin.html`).
+2. Primera vez pide Bin ID + Master API Key del JSONBin → quedan guardados localmente.
+3. Tabla con TODOS los registros, auto-refresh cada 30 s.
+4. Filtros por piloto, vuelo, status, rango de fechas y búsqueda libre.
+5. Stats arriba (Total / Hoy / Pilotos activos / Incidentes No-info) calculadas según el filtro actual.
+6. Botón **Download CSV** exporta lo filtrado.
+7. Botón **Sign out** olvida las credenciales en este navegador (no toca el bin).
 
 ## Fórmula
 
@@ -26,17 +44,21 @@ HIGH_END  = TOTAL_L × (1 + 0.0175)
 
 ## Notas técnicas
 
-- Archivo único `index.html` autocontenido (HTML + CSS + JS inline). Logo embebido como data URI.
-- Funciona offline una vez cargado en el navegador.
-- Los registros se guardan en `localStorage` del dispositivo (cache local) **y** se sincronizan a un Excel compartido en SharePoint vía un flow de Power Automate (ver `SETUP_SHAREPOINT.md`).
-- Si el dispositivo está offline, los registros quedan en cola y se suben automáticamente al recuperar conexión.
-- Compatibilidad: navegadores modernos (Chrome, Edge, Safari, Firefox).
+- HTMLs autocontenidos (HTML + CSS + JS inline). Logo embebido como data URI.
+- **Service Worker** (`sw.js`) cachea la app del piloto: carga sin internet a partir de la 2.ª visita.
+- Pilotos: cada save va a `localStorage` y al backend. Si está offline, queda encolado y se manda al volver la conexión (auto-resync).
+- Admin: solo lee del backend, nunca escribe.
+- Compatibilidad: Chrome, Edge, Safari, Firefox modernos.
 
-## Backend de registros compartidos
+## Backend compartido (JSONBin)
 
-Toda la sincronización con SharePoint Excel se hace a través de un **único endpoint** (URL del trigger HTTP de Power Automate), configurado en la constante `CLOUD_WEBHOOK_URL` dentro de `index.html`.
+La sincronización pasa por un **bin de JSONBin.io** (free tier). Se configuran dos constantes en `index.html` y `admin.html`:
 
-- Mientras esa constante esté vacía, la app corre en **modo local** (cada tablet ve solo lo suyo).
-- Apenas se setea la URL, la app pasa a **modo SharePoint**: cada registro se replica al Excel y al abrir la app se traen los registros de todos los pilotos.
+```js
+const JSONBIN_BIN_ID  = '...';
+const JSONBIN_API_KEY = '...';
+```
 
-Pasos detallados en [`SETUP_SHAREPOINT.md`](./SETUP_SHAREPOINT.md). El Office Script que escribe en el Excel está en [`office-script-fuel-records.ts`](./office-script-fuel-records.ts).
+Mientras estén vacías, la app corre en **modo local** (cada tablet ve solo lo suyo, admin pide credenciales).
+
+Pasos completos: [`SETUP_JSONBIN.md`](./SETUP_JSONBIN.md) (5 minutos).

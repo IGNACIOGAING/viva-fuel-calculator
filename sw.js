@@ -1,20 +1,18 @@
 /**
  * Viva Aerobus · Fuel Loading Calculator
- * Service Worker para soporte offline.
+ * Service Worker para soporte offline (solo cachea la app del piloto).
  *
  * Estrategia:
- *  - HTML / navegación → network-first con fallback a cache (siempre tratamos
- *    de traer la última versión, pero si no hay red usamos la cacheada).
- *  - Fonts y assets externos → stale-while-revalidate (devolvemos cache rápido
- *    y refrescamos en background).
- *  - Webhook de SharePoint (cualquier POST a logic.azure.com) → SIEMPRE network,
- *    nunca cache. Si falla, dejamos que el frontend lo encole en localStorage.
+ *  - HTML / navegación → network-first con fallback a cache.
+ *  - Fonts y assets externos → stale-while-revalidate.
+ *  - JSONBin (api.jsonbin.io) → SIEMPRE network, nunca cache. Si falla, el
+ *    frontend lo encola en localStorage y reintenta cuando vuelve la conexión.
  *
- * Bumpá CACHE_VERSION cada vez que cambies el HTML para forzar la actualización
- * en dispositivos que ya tienen la SW vieja instalada.
+ * Bumpá CACHE_VERSION cada vez que cambies index.html para forzar la
+ * actualización en dispositivos que ya tienen una SW vieja instalada.
  */
 
-const CACHE_VERSION = 'viva-fuel-v4';
+const CACHE_VERSION = 'viva-fuel-v5';
 const SHELL_CACHE   = CACHE_VERSION + '-shell';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
@@ -44,16 +42,16 @@ function isHtmlRequest(request) {
   return accept.includes('text/html');
 }
 
-function isWebhookRequest(url) {
-  return /logic\.azure\.com|powerautomate\.com|microsoft\.com/i.test(url.hostname);
+function isApiRequest(url) {
+  return /api\.jsonbin\.io|jsonbin\.io/i.test(url.hostname);
 }
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
-  // Nunca tocar el webhook de SharePoint/Power Automate.
-  if (isWebhookRequest(url) || request.method !== 'GET') {
+  // Nunca tocar las llamadas al backend (siempre tienen que ir a la red).
+  if (isApiRequest(url) || request.method !== 'GET') {
     return;
   }
 

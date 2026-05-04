@@ -1211,12 +1211,14 @@
   const PILOT_KEY   = 'viva_fuel_pilot_id'; // ID del piloto en este dispositivo
   const MAX_RECORDS = 500;         // tope para no inflar localStorage
 
-  // ====================== Sync con SharePoint Excel (vía Power Automate) ======================
-  // Pegá acá la URL del trigger HTTP de tu flow de Power Automate.
-  // Si lo dejás vacío, los registros solo se guardan en este dispositivo (modo local).
-  // Ver SETUP_SHAREPOINT.md para los pasos de setup (~10 minutos).
-  const CLOUD_WEBHOOK_URL = '';
-  const AUTO_REFRESH_MS   = 30000; // refresca el histórico cada 30s cuando hay nube
+  // ====================== Backend compartido (JSONBin.io) ======================
+  // Pegá acá los datos de tu bin de JSONBin (https://jsonbin.io).
+  // Mientras estos valores estén vacíos, la app corre en MODO LOCAL — cada tablet
+  // ve solo sus propios registros. Apenas se setean, cada save logueado se sube
+  // automáticamente al bin compartido y aparece en admin.html.
+  // Ver SETUP_JSONBIN.md para los pasos (5 minutos).
+  const JSONBIN_BIN_ID  = '';
+  const JSONBIN_API_KEY = '';
 
   // ====================== DOM ======================
   const $ = (id) => document.getElementById(id);
@@ -1425,92 +1427,91 @@
     }
   }
 
-  // ====================== Cloud (SharePoint Excel via Power Automate) ======================
+  // ====================== Cloud (JSONBin.io — write-only desde piloto) ======================
+  // El piloto NO descarga registros del cloud; solo manda los suyos. La vista admin
+  // (admin.html) es la que lee el bin completo.
   function isCloudConfigured() {
-    return typeof CLOUD_WEBHOOK_URL === 'string'
-      && /^https:\/\/.+\..+/i.test(CLOUD_WEBHOOK_URL);
+    return typeof JSONBIN_BIN_ID === 'string' && JSONBIN_BIN_ID.length >= 10
+        && typeof JSONBIN_API_KEY === 'string' && JSONBIN_API_KEY.length >= 20;
   }
 
-  // El Excel guarda nombres "humanos"; el frontend usa frKg/fobKg/dateTime/etc.
-  // Estas dos funciones traducen entre los dos formatos.
+  const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b/';
+
+  async function jsonbinFetchAll() {
+    const r = await fetch(JSONBIN_BASE + JSONBIN_BIN_ID + '/latest', {
+      method: 'GET',
+      headers: {
+        'X-Master-Key': JSONBIN_API_KEY,
+        'X-Bin-Meta':   'false'
+      },
+      cache: 'no-store'
+    });
+    if (!r.ok) throw new Error('JSONBin GET ' + r.status);
+    const body = await r.json();
+    if (Array.isArray(body)) return body;
+    if (body && Array.isArray(body.records)) return body.records;
+    return [];
+  }
+
+  async function jsonbinReplaceAll(arr) {
+    const r = await fetch(JSONBIN_BASE + JSONBIN_BIN_ID, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_API_KEY
+      },
+      body: JSON.stringify(arr)
+    });
+    if (!r.ok) throw new Error('JSONBin PUT ' + r.status);
+  }
+
+  // Schema "humano" para que el bin sea legible si se mira directo en jsonbin.io.
   function toWire(r) {
     return {
+      id:        String(r.id || ''),
       timestamp: r.iso || r.dateTime || '',
-      pilotId: r.pilotId || '',
-      flight: r.flight || '',
-      fr:      Number.isFinite(r.frKg)    ? r.frKg    : null,
-      fob:     Number.isFinite(r.fobKg)   ? r.fobKg   : null,
-      totalKg: Number.isFinite(r.totalKg) ? r.totalKg : null,
-      density: Number.isFinite(r.density) ? r.density : null,
-      totalL:  Number.isFinite(r.totalL)  ? r.totalL  : null,
-      lowL:    Number.isFinite(r.lowL)    ? r.lowL    : null,
-      highL:   Number.isFinite(r.highL)   ? r.highL   : null,
-      status:  r.status || '',
-      id: String(r.id || '')
+      pilotId:   r.pilotId || '',
+      flight:    r.flight || '',
+      frKg:      Number.isFinite(r.frKg)    ? r.frKg    : null,
+      fobKg:     Number.isFinite(r.fobKg)   ? r.fobKg   : null,
+      totalKg:   Number.isFinite(r.totalKg) ? r.totalKg : null,
+      density:   Number.isFinite(r.density) ? r.density : null,
+      totalL:    Number.isFinite(r.totalL)  ? r.totalL  : null,
+      lowL:      Number.isFinite(r.lowL)    ? r.lowL    : null,
+      highL:     Number.isFinite(r.highL)   ? r.highL   : null,
+      status:    r.status || '',
+      device:    (typeof navigator !== 'undefined' && navigator.platform) || ''
     };
   }
 
-  function fromWire(r) {
-    const ts = r.timestamp || '';
-    const d  = ts ? new Date(ts) : null;
-    let dateTime = '', iso = '';
-    if (d && isFinite(d.getTime())) {
-      dateTime = fmtDateTime(d);
-      iso = fmtISO(d);
-    } else {
-      dateTime = String(ts);
-      iso = String(ts);
-    }
-    const num = (v) => {
-      if (v === null || v === undefined || v === '') return null;
-      const n = parseFloat(v);
-      return Number.isFinite(n) ? n : null;
-    };
-    return {
-      id: r.id != null ? r.id : Date.now(),
-      dateTime,
-      iso,
-      pilotId: String(r.pilotId || ''),
-      flight:  String(r.flight || ''),
-      frKg:    num(r.fr),
-      fobKg:   num(r.fob),
-      totalKg: num(r.totalKg),
-      density: num(r.density),
-      totalL:  num(r.totalL),
-      lowL:    num(r.lowL),
-      highL:   num(r.highL),
-      status:  String(r.status || ''),
-      synced:  true
-    };
-  }
-
-  async function cloudCall(payload) {
-    // text/plain evita el preflight CORS — el flow igual recibe el JSON crudo y lo parsea.
-    const resp = await fetch(CLOUD_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const text = await resp.text();
-    if (!text) return {};
-    try { return JSON.parse(text); }
-    catch (e) {
-      // Power Automate a veces devuelve el body del script doblemente serializado
-      try { return JSON.parse(JSON.parse(text)); } catch (_) { return {}; }
-    }
-  }
-
-  async function cloudFetchRecords() {
-    const data = await cloudCall({ action: 'list' });
-    const arr = Array.isArray(data && data.records) ? data.records : [];
-    return arr.map(fromWire);
-  }
-
+  // Append-with-verify: lee, agrega si falta el id, escribe, y reverifica que quedó.
+  // Si dos pilotos pisan al mismo tiempo, el segundo lo detecta en la verificación
+  // y reintenta. Para nuestro volumen alcanza con 3 intentos.
   async function cloudPushRecord(record) {
-    const data = await cloudCall({ action: 'add', record: toWire(record) });
-    if (data && data.ok === false) throw new Error(data.error || 'Push failed');
-    return true;
+    const wire = toWire(record);
+    const id = wire.id;
+    if (!id) throw new Error('Record without id');
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const current = await jsonbinFetchAll();
+      if (current.some(x => String(x.id) === id)) return true; // ya estaba
+
+      const next = current.concat([wire]);
+      try {
+        await jsonbinReplaceAll(next);
+      } catch (e) {
+        if (attempt === 2) throw e;
+        await new Promise(res => setTimeout(res, 400 + Math.random() * 600));
+        continue;
+      }
+
+      // Verificación tras el PUT — si una escritura concurrente nos pisó,
+      // nuestro id no aparecerá y reintentamos.
+      const verify = await jsonbinFetchAll();
+      if (verify.some(x => String(x.id) === id)) return true;
+      await new Promise(res => setTimeout(res, 300 + Math.random() * 500));
+    }
+    throw new Error('Could not push after 3 attempts');
   }
 
   function countPending() {
@@ -1535,21 +1536,12 @@
     const lblEl = cloudStatusEl.querySelector('.lbl');
     if (lblEl) {
       if (status === 'syncing')      lblEl.textContent = 'Syncing…';
-      else if (status === 'synced')  lblEl.textContent = 'Synced · SharePoint';
+      else if (status === 'synced')  lblEl.textContent = 'Synced · cloud';
       else if (status === 'offline') lblEl.textContent = 'Offline · queued';
       else if (status === 'error')   lblEl.textContent = 'Sync error';
       else                            lblEl.textContent = 'Local mode';
     }
     refreshPendingBadge();
-  }
-
-  function mergeRecords(localArr, cloudArr) {
-    const cloudIds = new Set(cloudArr.map(r => String(r.id)));
-    const cloudNormalized = cloudArr.map(r => ({ ...r, synced: true }));
-    const localOnly = localArr.filter(r => !cloudIds.has(String(r.id)));
-    const merged = cloudNormalized.concat(localOnly);
-    merged.sort((a, b) => Number(b.id) - Number(a.id));
-    return merged;
   }
 
   async function pushPending() {
@@ -1585,16 +1577,14 @@
     }
 
     if (!isOnline()) {
-      setCloudStatus('offline');
+      const pending = countPending();
+      setCloudStatus(pending > 0 ? 'offline' : 'synced');
       return;
     }
 
+    // El piloto solo PUSHEA pendientes — nunca trae registros de otros pilotos.
     setCloudStatus('syncing');
     try {
-      const cloudArr = await cloudFetchRecords();
-      records = mergeRecords(records, cloudArr);
-      saveLocal(records);
-      renderRecords();
       const pushed = await pushPending();
       const stillPending = countPending();
       setCloudStatus(stillPending > 0 ? 'offline' : 'synced');
@@ -1604,27 +1594,23 @@
     }
   }
 
-  async function refreshFromCloud(silent) {
+  async function flushPending(silent) {
     if (!cloudConfigured) return;
     if (!isOnline()) {
-      setCloudStatus('offline');
-      if (!silent) showToast('No connection — pending records stay queued', 'warn');
+      const pending = countPending();
+      setCloudStatus(pending > 0 ? 'offline' : 'synced');
+      if (!silent && pending > 0) showToast('No connection — ' + pending + ' record' + (pending === 1 ? '' : 's') + ' queued', 'warn');
       return;
     }
     setCloudStatus('syncing');
     try {
-      const cloudArr = await cloudFetchRecords();
-      records = mergeRecords(records, cloudArr);
-      saveLocal(records);
-      renderRecords();
       const pushed = await pushPending();
       const stillPending = countPending();
       setCloudStatus(stillPending > 0 ? 'offline' : 'synced');
-      if (pushed > 0) showToast(pushed + ' pending record' + (pushed === 1 ? '' : 's') + ' synced');
-      if (!silent) showToast('History refreshed · ' + records.length + ' record' + (records.length === 1 ? '' : 's'));
+      if (pushed > 0 && !silent) showToast(pushed + ' pending record' + (pushed === 1 ? '' : 's') + ' synced');
     } catch (e) {
       setCloudStatus(isOnline() ? 'error' : 'offline');
-      if (!silent) showToast('Could not reach SharePoint', 'warn');
+      if (!silent) showToast('Could not reach the cloud', 'warn');
     }
   }
 
@@ -1661,7 +1647,7 @@
     if (!cloudConfigured) return;
     clearTimeout(resyncDebounce);
     resyncDebounce = setTimeout(() => {
-      refreshFromCloud(true);
+      flushPending(true);
     }, reason === 'online' ? 800 : 200);
   }
 
@@ -1836,7 +1822,10 @@
       showToast('Cloud sync not configured', 'warn');
       return;
     }
-    await refreshFromCloud(false);
+    await flushPending(false);
+    if (countPending() === 0) {
+      showToast('All records synced');
+    }
   }
 
   // ====================== Clock ======================
@@ -1894,11 +1883,12 @@
   if (cloudConfigured) {
     if (btnRefresh) btnRefresh.hidden = false;
     if (recordsSubEl) {
-      recordsSubEl.textContent = 'Shared history across all pilots via SharePoint. Auto-syncs every 30 s and on reconnect.';
+      recordsSubEl.textContent = 'You see your own loads on this device. Each save is also pushed automatically to the shared admin view.';
     }
-    setInterval(() => {
-      if (isOnline()) refreshFromCloud(true);
-    }, AUTO_REFRESH_MS);
+  } else {
+    if (recordsSubEl) {
+      recordsSubEl.textContent = 'Records are stored on this device. Configure a JSONBin backend to share them with the admin view.';
+    }
   }
 
   tickClock();

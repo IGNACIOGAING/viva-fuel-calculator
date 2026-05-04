@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="description" content="Viva Aerobus · Fuel Records · Admin View" />
+<meta name="theme-color" content="#0A0E0A" />
+<title>Viva · Fuel Records · Admin</title>
+
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230A0E0A'/><path d='M8.5 11 L13.5 21.5 L18.5 11' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/><circle cx='23' cy='9' r='3' fill='%2373C900'/></svg>" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --viva-green: #00AE44;
+    --viva-green-light: #73C900;
+    --viva-green-dark: #008A35;
+    --viva-green-soft: #E6F6EC;
+    --viva-magenta: #EC008C;
+    --viva-magenta-dark: #BF0070;
+    --viva-magenta-soft: #FCE6F2;
+
+    --bg: #F4F5F1;
+    --bg-grid: #ECEEE6;
+    --surface: #FFFFFF;
+    --surface-alt: #FAFBF7;
+    --ink: #0A0E0A;
+    --ink-2: #2A2F2A;
+    --muted: #6B716B;
+    --line: #E1E5DC;
+    --line-strong: #C9CFC2;
+
+    --warn: #FFB800;
+    --danger: #DC2626;
+
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+
+    --shadow-sm: 0 1px 2px rgba(10, 14, 10, 0.04), 0 1px 1px rgba(10, 14, 10, 0.03);
+    --shadow-md: 0 4px 12px rgba(10, 14, 10, 0.06), 0 2px 4px rgba(10, 14, 10, 0.04);
+    --shadow-lg: 0 18px 40px -12px rgba(10, 14, 10, 0.18), 0 8px 16px -8px rgba(10, 14, 10, 0.08);
+
+    --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-body: 'Manrope', ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--ink);
+    background: var(--bg);
+    background-image:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-position: -1px -1px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+  }
+
+  /* ======================== HEADER ======================== */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(10, 14, 10, 0.92);
+    backdrop-filter: saturate(140%) blur(12px);
+    -webkit-backdrop-filter: saturate(140%) blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    color: white;
+  }
+  .topbar-inner {
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 14px 28px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 24px;
+  }
+  .brand-logo {
+    height: 28px;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
+  }
+  .brand-logo path:not([data-accent]) { fill: white; }
+  .brand-logo path[data-accent] { fill: var(--viva-green-light); }
+  .topbar-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    color: white;
+    line-height: 1.1;
+  }
+  .topbar-title small {
+    display: block;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--viva-green-light);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .clock {
+    text-align: right;
+    font-family: var(--font-mono);
+    color: rgba(255,255,255,0.85);
+    line-height: 1.05;
+  }
+  .clock .time {
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.06em;
+  }
+  .clock .date {
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  @media (max-width: 720px) {
+    .topbar-inner { padding: 12px 16px; gap: 12px; grid-template-columns: auto 1fr auto; }
+    .topbar-title { font-size: 14px; }
+    .clock .time { font-size: 14px; }
+  }
+
+  /* ======================== LAYOUT ======================== */
+  main {
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 32px 28px 80px;
+  }
+  @media (max-width: 720px) { main { padding: 20px 16px 60px; } }
+
+  section { margin-bottom: 40px; }
+
+  .section-tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--viva-green-dark);
+    background: var(--viva-green-soft);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(26px, 3.4vw, 38px);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin: 0 0 8px;
+  }
+  .section-sub {
+    color: var(--muted);
+    margin: 0;
+    max-width: 720px;
+  }
+
+  /* ======================== STATS GRID ======================== */
+  .stats-grid {
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 980px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px) { .stats-grid { grid-template-columns: 1fr; } }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card .lbl {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .stat-card .v {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 32px;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    font-feature-settings: "tnum" 1;
+  }
+  .stat-card .v small {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+    margin-left: 4px;
+  }
+  .stat-card.accent { background: linear-gradient(135deg, var(--viva-green-soft) 0%, white 70%); }
+  .stat-card.accent .v { color: var(--viva-green-dark); }
+  .stat-card.warn { background: linear-gradient(135deg, var(--viva-magenta-soft) 0%, white 70%); }
+  .stat-card.warn .v { color: var(--viva-magenta-dark); }
+
+  /* ======================== FILTERS BAR ======================== */
+  .filters {
+    margin-top: 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+    gap: 14px;
+    align-items: end;
+    box-shadow: var(--shadow-sm);
+  }
+  @media (max-width: 980px) {
+    .filters { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 540px) {
+    .filters { grid-template-columns: 1fr; }
+  }
+  .filter-group label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .filter-group input,
+  .filter-group select {
+    width: 100%;
+    border: 1px solid var(--line-strong);
+    background: var(--surface-alt);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+  .filter-group input:focus,
+  .filter-group select:focus {
+    border-color: var(--viva-green);
+    box-shadow: 0 0 0 3px var(--viva-green-soft);
+  }
+
+  /* ======================== RECORDS TABLE ======================== */
+  .records-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .records-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .cloud-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-alt);
+    white-space: nowrap;
+    transition: all 200ms ease;
+  }
+  .cloud-status .dot {
+    width: 7px; height: 7px; border-radius: 999px;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+  .cloud-status[data-status="syncing"] {
+    color: var(--viva-green-dark);
+    border-color: rgba(0, 138, 53, 0.25);
+    background: var(--viva-green-soft);
+  }
+  .cloud-status[data-status="syncing"] .dot {
+    background: var(--viva-green);
+    animation: cloudPulse 1.2s ease-in-out infinite;
+  }
+  .cloud-status[data-status="synced"] {
+    color: var(--viva-green-dark);
+    border-color: rgba(0, 138, 53, 0.25);
+    background: var(--viva-green-soft);
+  }
+  .cloud-status[data-status="synced"] .dot { background: var(--viva-green); }
+  .cloud-status[data-status="error"] {
+    color: var(--viva-magenta-dark);
+    border-color: rgba(191, 0, 112, 0.25);
+    background: var(--viva-magenta-soft);
+  }
+  .cloud-status[data-status="error"] .dot { background: var(--viva-magenta); }
+  .cloud-status[data-status="offline"] {
+    color: var(--ink-2);
+    border-color: var(--line-strong);
+    background: var(--surface-alt);
+  }
+  .cloud-status[data-status="offline"] .dot {
+    background: var(--ink-2);
+    animation: cloudPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes cloudPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.85); }
+  }
+
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: white;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 120ms ease;
+    letter-spacing: 0.02em;
+  }
+  .btn:hover { background: var(--ink-2); border-color: var(--ink-2); }
+  .btn.ghost {
+    background: white;
+    color: var(--ink);
+    border-color: var(--line-strong);
+  }
+  .btn.ghost:hover { background: var(--surface-alt); }
+  .btn.primary {
+    background: var(--viva-green);
+    border-color: var(--viva-green);
+  }
+  .btn.primary:hover { background: var(--viva-green-dark); border-color: var(--viva-green-dark); }
+  .btn svg { width: 14px; height: 14px; }
+
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .table-scroll { overflow-x: auto; }
+  table.records {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  table.records thead th {
+    background: var(--surface-alt);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  table.records tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+    vertical-align: middle;
+  }
+  table.records tbody tr:last-child td { border-bottom: 0; }
+  table.records tbody tr:hover td { background: var(--surface-alt); }
+  table.records td.flight,
+  table.records td.pilot {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+  }
+  table.records td.range {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--viva-green-dark);
+    white-space: nowrap;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .pill .d {
+    width: 6px; height: 6px; border-radius: 999px;
+  }
+  .pill.ok {
+    background: var(--viva-green-soft);
+    color: var(--viva-green-dark);
+  }
+  .pill.ok .d { background: var(--viva-green); }
+  .pill.no-info {
+    background: var(--viva-magenta-soft);
+    color: var(--viva-magenta-dark);
+  }
+  .pill.no-info .d { background: var(--viva-magenta); }
+
+  .empty {
+    padding: 64px 24px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .empty .ic {
+    width: 56px; height: 56px;
+    border-radius: 999px;
+    background: var(--surface-alt);
+    border: 1px solid var(--line);
+    margin: 0 auto 16px;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+  }
+  .empty h4 {
+    font-family: var(--font-display);
+    color: var(--ink);
+    margin: 0 0 6px;
+    font-weight: 700;
+  }
+  .empty p { margin: 0; font-size: 13px; }
+
+  /* ======================== CONNECT GATE ======================== */
+  .gate {
+    max-width: 480px;
+    margin: 80px auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 36px;
+    text-align: center;
+  }
+  .gate h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 26px;
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
+  }
+  .gate p { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+  .gate .field { text-align: left; margin-bottom: 14px; }
+  .gate .field label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .gate .field input {
+    width: 100%;
+    border: 1px solid var(--line-strong);
+    background: var(--surface-alt);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    outline: none;
+  }
+  .gate .field input:focus {
+    border-color: var(--viva-green);
+    box-shadow: 0 0 0 3px var(--viva-green-soft);
+  }
+  .gate .err {
+    color: var(--viva-magenta-dark);
+    font-size: 12px;
+    margin: 8px 0 0;
+    min-height: 18px;
+    text-align: left;
+  }
+  .gate .btn { width: 100%; justify-content: center; padding: 12px; margin-top: 8px; }
+
+  /* ======================== FOOTER ======================== */
+  .foot {
+    border-top: 1px solid var(--line);
+    padding: 16px 28px;
+    margin-top: 40px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-align: center;
+    background: white;
+  }
+
+  /* ======================== TOAST ======================== */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all 200ms ease;
+    z-index: 100;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+  }
+  .toast .dot {
+    width: 7px; height: 7px;
+    border-radius: 999px;
+    background: var(--viva-green);
+  }
+  .toast.warn .dot { background: var(--viva-magenta); }
+
+  /* ======================== HIDDEN ======================== */
+  [hidden] { display: none !important; }
+</style>
+</head>
+
+<body>
+
+<header class="topbar" hidden id="topbar">
+  <div class="topbar-inner">
+    <svg class="brand-logo" viewBox="0 0 200 32" xmlns="http://www.w3.org/2000/svg" aria-label="Viva Aerobus">
+      <path d="M11.4 4.5h6.4l-7 23h-7L-3.4 4.5h6.4L7.4 21z"/>
+      <path d="M22.5 4.5h6v23h-6z"/>
+      <path d="M44.4 4.5h6.4l-7 23h-7l-7.2-23h6.4L40.4 21z"/>
+      <path d="M67.4 4.5h6l8.6 23h-6.4L74 22.6h-9.3l-1.6 4.9h-6.4zm-1 13.4h6.6l-3.3-10z"/>
+      <circle cx="92" cy="9" r="3.5" data-accent />
+    </svg>
+    <div class="topbar-title">
+      Fuel Records
+      <small>Admin · Cross-pilot view</small>
+    </div>
+    <div class="clock">
+      <div class="time" id="clockTime">--:--:--</div>
+      <div class="date" id="clockDate">--</div>
+    </div>
+  </div>
+</header>
+
+<!-- ============== CONNECT GATE ============== -->
+<div class="gate" id="gate">
+  <h2>Connect to records</h2>
+  <p>Paste your JSONBin Bin ID and Master API Key to access the shared records. They're stored only on this device.</p>
+  <div class="field">
+    <label for="g-bin">Bin ID</label>
+    <input id="g-bin" type="text" placeholder="e.g. 6713abcd1234567890abcdef" autocomplete="off" />
+  </div>
+  <div class="field">
+    <label for="g-key">Master API Key</label>
+    <input id="g-key" type="password" placeholder="$2a$10$..." autocomplete="off" />
+  </div>
+  <div class="err" id="gate-err"></div>
+  <button class="btn primary" id="gate-go">Connect</button>
+  <p style="font-size: 11px; margin-top: 18px; color: var(--muted)">
+    Don't have these? Open <strong>jsonbin.io</strong>, sign up (free), create a bin, then copy the Bin ID and Master Key from your dashboard.
+  </p>
+</div>
+
+<!-- ============== ADMIN UI (hidden until connected) ============== -->
+<main id="adminUI" hidden>
+
+  <!-- ====== Stats ====== -->
+  <section>
+    <div class="section-tag">01 · Overview</div>
+    <h1 class="section-title">Records dashboard</h1>
+    <p class="section-sub">All loads logged by every pilot, in real time. Auto-refreshes every 30 seconds.</p>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="lbl">Total records</div>
+        <div class="v" id="statTotal">—</div>
+      </div>
+      <div class="stat-card accent">
+        <div class="lbl">Today</div>
+        <div class="v" id="statToday">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="lbl">Active pilots</div>
+        <div class="v" id="statPilots">—</div>
+      </div>
+      <div class="stat-card warn">
+        <div class="lbl">No-info incidents</div>
+        <div class="v" id="statIncidents">—</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== Filters + Records ====== -->
+  <section>
+    <div class="records-head">
+      <div>
+        <div class="records-meta">
+          <div class="section-tag">02 · Records</div>
+          <span class="cloud-status" id="cloudStatus" data-status="syncing">
+            <span class="dot"></span>
+            <span class="lbl">Syncing…</span>
+          </span>
+        </div>
+        <h2 class="section-title" style="font-size: clamp(22px, 2.6vw, 30px);">Load history</h2>
+        <p class="section-sub" id="recordsSub">Loading…</p>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="btnRefresh" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+          Refresh
+        </button>
+        <button class="btn primary" id="btnDownload" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download CSV
+        </button>
+        <button class="btn ghost" id="btnDisconnect" type="button" title="Forget Bin ID and API key">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign out
+        </button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="filter-group">
+        <label for="fSearch">Search</label>
+        <input id="fSearch" type="search" placeholder="Flight, pilot or text…" />
+      </div>
+      <div class="filter-group">
+        <label for="fPilot">Pilot</label>
+        <select id="fPilot"><option value="">All pilots</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="fFrom">From</label>
+        <input id="fFrom" type="date" />
+      </div>
+      <div class="filter-group">
+        <label for="fTo">To</label>
+        <input id="fTo" type="date" />
+      </div>
+      <div class="filter-group">
+        <label for="fStatus">Status</label>
+        <select id="fStatus">
+          <option value="">All</option>
+          <option value="OK">OK</option>
+          <option value="NO_INFO">No GH info</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-wrap" style="margin-top: 14px;">
+      <div class="table-scroll">
+        <table class="records" id="recordsTable">
+          <thead>
+            <tr>
+              <th>Date / Time</th>
+              <th>Pilot</th>
+              <th>Flight</th>
+              <th>FR (KG)</th>
+              <th>FOB (KG)</th>
+              <th>Total (KG)</th>
+              <th>Density</th>
+              <th>Total (L)</th>
+              <th>Range (L)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="recordsBody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="emptyState">
+        <div class="ic">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18"/><path d="M3 12h18"/><path d="M3 17h12"/></svg>
+        </div>
+        <h4>No records match the filters</h4>
+        <p>Adjust the filters above or wait for pilots to log new loads.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot" id="footEl" hidden>
+  <span>Viva Aerobus · Fuel Operations · Admin · Internal operational document</span>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="dot"></span>
+  <span id="toastMsg">Ready</span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ===================== Config =====================
+  // Para dejarlos fijos para todos los admins, completá estas constantes y los
+  // pilotos / admins entrarán sin gate. Si las dejás vacías, se piden por UI.
+  const FIXED_BIN_ID  = '';
+  const FIXED_API_KEY = '';
+
+  const STORAGE_KEY = 'viva_fuel_admin_creds';
+  const AUTO_REFRESH_MS = 30000;
+  const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b/';
+
+  // ===================== DOM =====================
+  const $ = (id) => document.getElementById(id);
+  const gateEl = $('gate');
+  const adminUIEl = $('adminUI');
+  const topbarEl = $('topbar');
+  const footEl = $('footEl');
+  const gBinEl = $('g-bin');
+  const gKeyEl = $('g-key');
+  const gateErrEl = $('gate-err');
+  const gateGoEl = $('gate-go');
+
+  const cloudStatusEl = $('cloudStatus');
+  const recordsSubEl = $('recordsSub');
+  const tableEl = $('recordsTable');
+  const recordsBodyEl = $('recordsBody');
+  const emptyEl = $('emptyState');
+  const btnRefreshEl = $('btnRefresh');
+  const btnDownloadEl = $('btnDownload');
+  const btnDisconnectEl = $('btnDisconnect');
+
+  const fSearchEl = $('fSearch');
+  const fPilotEl = $('fPilot');
+  const fFromEl = $('fFrom');
+  const fToEl = $('fTo');
+  const fStatusEl = $('fStatus');
+
+  const statTotalEl = $('statTotal');
+  const statTodayEl = $('statToday');
+  const statPilotsEl = $('statPilots');
+  const statIncidentsEl = $('statIncidents');
+
+  const toastEl = $('toast');
+  const toastMsgEl = $('toastMsg');
+
+  // ===================== State =====================
+  let creds = null; // { binId, apiKey }
+  let allRecords = [];
+  let refreshTimer = null;
+
+  // ===================== Helpers =====================
+  function showToast(msg, kind) {
+    toastMsgEl.textContent = msg;
+    toastEl.classList.toggle('warn', kind === 'warn');
+    toastEl.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toastEl.classList.remove('show'), 2400);
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function fmtInt(n) {
+    if (!Number.isFinite(n)) return '—';
+    return Math.round(n).toLocaleString('en-US');
+  }
+  function fmtL(n) {
+    if (!Number.isFinite(n)) return '—';
+    return n.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  }
+  function fmtDensity(n) {
+    if (!Number.isFinite(n)) return '—';
+    return n.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 4 });
+  }
+  function fmtDateTime(d) {
+    if (!d) return '';
+    const dt = (d instanceof Date) ? d : new Date(d);
+    if (!isFinite(dt.getTime())) return String(d);
+    return pad(dt.getDate()) + '/' + pad(dt.getMonth() + 1) + '/' + dt.getFullYear()
+      + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+  }
+  function isoDateOnly(d) {
+    if (!d) return '';
+    const dt = (d instanceof Date) ? d : new Date(d);
+    if (!isFinite(dt.getTime())) return '';
+    return dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
+  }
+
+  function setCloudStatus(status, label) {
+    if (!cloudStatusEl) return;
+    cloudStatusEl.setAttribute('data-status', status);
+    const lblEl = cloudStatusEl.querySelector('.lbl');
+    if (lblEl) {
+      if (label) lblEl.textContent = label;
+      else if (status === 'syncing') lblEl.textContent = 'Syncing…';
+      else if (status === 'synced')  lblEl.textContent = 'Synced · live';
+      else if (status === 'offline') lblEl.textContent = 'Offline';
+      else if (status === 'error')   lblEl.textContent = 'Sync error';
+      else                            lblEl.textContent = 'Idle';
+    }
+  }
+
+  // ===================== Creds (gate) =====================
+  function loadCreds() {
+    if (FIXED_BIN_ID && FIXED_API_KEY) {
+      creds = { binId: FIXED_BIN_ID, apiKey: FIXED_API_KEY };
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const obj = JSON.parse(raw);
+      if (obj && obj.binId && obj.apiKey) creds = obj;
+    } catch (e) { /* ignore */ }
+  }
+
+  function saveCreds() {
+    if (FIXED_BIN_ID && FIXED_API_KEY) return;
+    if (!creds) return;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(creds)); }
+    catch (e) { /* ignore */ }
+  }
+
+  function clearCreds() {
+    creds = null;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+  }
+
+  function showGate() {
+    gateEl.hidden = false;
+    adminUIEl.hidden = true;
+    topbarEl.hidden = true;
+    footEl.hidden = true;
+    if (refreshTimer) clearInterval(refreshTimer);
+    setTimeout(() => gBinEl.focus(), 100);
+  }
+
+  function showAdmin() {
+    gateEl.hidden = true;
+    adminUIEl.hidden = false;
+    topbarEl.hidden = false;
+    footEl.hidden = false;
+  }
+
+  async function attemptConnect(binId, apiKey) {
+    gateErrEl.textContent = '';
+    gateGoEl.disabled = true;
+    gateGoEl.textContent = 'Checking…';
+    try {
+      const r = await fetch(JSONBIN_BASE + binId + '/latest', {
+        method: 'GET',
+        headers: { 'X-Master-Key': apiKey, 'X-Bin-Meta': 'false' },
+        cache: 'no-store'
+      });
+      if (r.status === 401 || r.status === 403) {
+        gateErrEl.textContent = 'Wrong API key or no access to this bin.';
+        return false;
+      }
+      if (r.status === 404) {
+        gateErrEl.textContent = 'Bin not found. Double-check the Bin ID.';
+        return false;
+      }
+      if (!r.ok) {
+        gateErrEl.textContent = 'Could not connect (HTTP ' + r.status + '). Try again.';
+        return false;
+      }
+      creds = { binId, apiKey };
+      saveCreds();
+      return true;
+    } catch (e) {
+      gateErrEl.textContent = 'Network error. Check your internet and try again.';
+      return false;
+    } finally {
+      gateGoEl.disabled = false;
+      gateGoEl.textContent = 'Connect';
+    }
+  }
+
+  // ===================== Fetch =====================
+  async function fetchAll() {
+    if (!creds) throw new Error('No credentials');
+    const r = await fetch(JSONBIN_BASE + creds.binId + '/latest', {
+      method: 'GET',
+      headers: { 'X-Master-Key': creds.apiKey, 'X-Bin-Meta': 'false' },
+      cache: 'no-store'
+    });
+    if (!r.ok) throw new Error('JSONBin GET ' + r.status);
+    const body = await r.json();
+    if (Array.isArray(body)) return body;
+    if (body && Array.isArray(body.records)) return body.records;
+    return [];
+  }
+
+  async function refreshFromCloud(silent) {
+    if (!navigator.onLine) {
+      setCloudStatus('offline');
+      if (!silent) showToast('No internet connection', 'warn');
+      return;
+    }
+    setCloudStatus('syncing');
+    try {
+      const arr = await fetchAll();
+      allRecords = arr.slice().sort((a, b) => {
+        const ta = new Date(a.timestamp || 0).getTime();
+        const tb = new Date(b.timestamp || 0).getTime();
+        return tb - ta;
+      });
+      rebuildPilotFilter();
+      render();
+      setCloudStatus('synced');
+      const now = new Date();
+      if (recordsSubEl) {
+        recordsSubEl.textContent = 'Last refresh: ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds())
+          + ' · ' + allRecords.length + ' record' + (allRecords.length === 1 ? '' : 's') + ' total';
+      }
+      if (!silent) showToast('Refreshed · ' + allRecords.length + ' record' + (allRecords.length === 1 ? '' : 's'));
+    } catch (e) {
+      setCloudStatus('error');
+      if (!silent) showToast('Could not reach the cloud', 'warn');
+    }
+  }
+
+  // ===================== Filters =====================
+  function rebuildPilotFilter() {
+    const current = fPilotEl.value;
+    const set = new Set();
+    allRecords.forEach(r => { if (r.pilotId) set.add(String(r.pilotId).toUpperCase()); });
+    const sorted = Array.from(set).sort();
+    fPilotEl.innerHTML = '<option value="">All pilots</option>'
+      + sorted.map(p => '<option value="' + escapeHtml(p) + '">' + escapeHtml(p) + '</option>').join('');
+    if (sorted.includes(current)) fPilotEl.value = current;
+  }
+
+  function applyFilters(arr) {
+    const q       = (fSearchEl.value || '').trim().toLowerCase();
+    const pilot   = (fPilotEl.value || '').trim().toUpperCase();
+    const from    = fFromEl.value;
+    const to      = fToEl.value;
+    const status  = fStatusEl.value;
+
+    return arr.filter(r => {
+      if (pilot && String(r.pilotId || '').toUpperCase() !== pilot) return false;
+      if (status && r.status !== status) return false;
+      const dateOnly = isoDateOnly(r.timestamp);
+      if (from && dateOnly < from) return false;
+      if (to && dateOnly > to) return false;
+      if (q) {
+        const blob = (
+          (r.pilotId || '') + ' ' +
+          (r.flight || '')  + ' ' +
+          (r.timestamp || '') + ' ' +
+          (r.status || '')
+        ).toLowerCase();
+        if (blob.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  // ===================== Render =====================
+  function updateStats(filtered) {
+    statTotalEl.textContent = String(filtered.length);
+    const todayKey = isoDateOnly(new Date());
+    const today = filtered.filter(r => isoDateOnly(r.timestamp) === todayKey).length;
+    statTodayEl.textContent = String(today);
+    const pilots = new Set();
+    filtered.forEach(r => { if (r.pilotId) pilots.add(String(r.pilotId).toUpperCase()); });
+    statPilotsEl.textContent = String(pilots.size);
+    const incidents = filtered.filter(r => r.status !== 'OK').length;
+    statIncidentsEl.textContent = String(incidents);
+  }
+
+  function render() {
+    const filtered = applyFilters(allRecords);
+    updateStats(filtered);
+
+    if (filtered.length === 0) {
+      recordsBodyEl.innerHTML = '';
+      tableEl.style.display = 'none';
+      emptyEl.style.display = '';
+      return;
+    }
+    tableEl.style.display = '';
+    emptyEl.style.display = 'none';
+
+    const rows = filtered.map(r => {
+      const isOk = r.status === 'OK';
+      const range = (Number.isFinite(r.lowL) && Number.isFinite(r.highL))
+        ? (fmtL(r.lowL) + ' – ' + fmtL(r.highL))
+        : '—';
+      const pill = isOk
+        ? '<span class="pill ok"><span class="d"></span>OK</span>'
+        : '<span class="pill no-info"><span class="d"></span>No GH info</span>';
+      return '<tr>' +
+        '<td>' + escapeHtml(fmtDateTime(r.timestamp)) + '</td>' +
+        '<td class="pilot">' + escapeHtml(r.pilotId || '—') + '</td>' +
+        '<td class="flight">' + escapeHtml(r.flight || '—') + '</td>' +
+        '<td>' + (Number.isFinite(r.frKg)    ? fmtInt(r.frKg)    : '—') + '</td>' +
+        '<td>' + (Number.isFinite(r.fobKg)   ? fmtInt(r.fobKg)   : '—') + '</td>' +
+        '<td>' + (Number.isFinite(r.totalKg) ? fmtInt(r.totalKg) : '—') + '</td>' +
+        '<td>' + (Number.isFinite(r.density) ? fmtDensity(r.density) : '—') + '</td>' +
+        '<td>' + (Number.isFinite(r.totalL)  ? fmtL(r.totalL)    : '—') + '</td>' +
+        '<td class="range">' + range + '</td>' +
+        '<td>' + pill + '</td>' +
+      '</tr>';
+    }).join('');
+    recordsBodyEl.innerHTML = rows;
+  }
+
+  // ===================== CSV =====================
+  function csvEscape(v) {
+    if (v == null) return '';
+    const s = String(v);
+    if (/[",;\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+  function buildCsv(arr) {
+    const headers = [
+      'Date/Time', 'ISO', 'Pilot ID', 'Flight', 'FR (KG)', 'FOB (KG)', 'Total (KG)',
+      'Density (kg/L)', 'Total (L)', 'Low (L)', 'High (L)', 'Status'
+    ];
+    const lines = [headers.join(';')];
+    arr.forEach(r => {
+      lines.push([
+        fmtDateTime(r.timestamp),
+        r.timestamp || '',
+        r.pilotId || '',
+        r.flight || '',
+        Number.isFinite(r.frKg) ? r.frKg : '',
+        Number.isFinite(r.fobKg) ? r.fobKg : '',
+        Number.isFinite(r.totalKg) ? r.totalKg : '',
+        Number.isFinite(r.density) ? r.density : '',
+        Number.isFinite(r.totalL) ? r.totalL.toFixed(2) : '',
+        Number.isFinite(r.lowL) ? r.lowL.toFixed(2) : '',
+        Number.isFinite(r.highL) ? r.highL.toFixed(2) : '',
+        r.status === 'OK' ? 'OK' : 'No ground handler info'
+      ].map(csvEscape).join(';'));
+    });
+    return lines.join('\r\n');
+  }
+  function handleDownload() {
+    const filtered = applyFilters(allRecords);
+    if (filtered.length === 0) {
+      showToast('No records to export', 'warn');
+      return;
+    }
+    const csv = '\uFEFF' + buildCsv(filtered);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = 'viva_fuel_records_' + stamp + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(filtered.length + ' record' + (filtered.length === 1 ? '' : 's') + ' exported');
+  }
+
+  // ===================== Clock =====================
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  function tickClock() {
+    const d = new Date();
+    $('clockTime').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    $('clockDate').textContent = pad(d.getDate()) + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  }
+
+  // ===================== Boot =====================
+  function bootAdmin() {
+    showAdmin();
+    refreshFromCloud(true);
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = setInterval(() => {
+      if (navigator.onLine) refreshFromCloud(true);
+      else setCloudStatus('offline');
+    }, AUTO_REFRESH_MS);
+  }
+
+  // Filter listeners (debounced search)
+  let filterTimer = null;
+  function scheduleRender() {
+    clearTimeout(filterTimer);
+    filterTimer = setTimeout(render, 80);
+  }
+  fSearchEl.addEventListener('input', scheduleRender);
+  fPilotEl.addEventListener('change', scheduleRender);
+  fFromEl.addEventListener('change', scheduleRender);
+  fToEl.addEventListener('change', scheduleRender);
+  fStatusEl.addEventListener('change', scheduleRender);
+
+  btnRefreshEl.addEventListener('click', () => refreshFromCloud(false));
+  btnDownloadEl.addEventListener('click', handleDownload);
+  btnDisconnectEl.addEventListener('click', () => {
+    if (FIXED_BIN_ID && FIXED_API_KEY) {
+      showToast('Credentials are hard-coded; cannot sign out', 'warn');
+      return;
+    }
+    clearCreds();
+    allRecords = [];
+    showGate();
+    showToast('Signed out');
+  });
+
+  gateGoEl.addEventListener('click', async () => {
+    const binId = (gBinEl.value || '').trim();
+    const key   = (gKeyEl.value || '').trim();
+    if (!binId || !key) {
+      gateErrEl.textContent = 'Both fields are required.';
+      return;
+    }
+    const ok = await attemptConnect(binId, key);
+    if (ok) bootAdmin();
+  });
+  [gBinEl, gKeyEl].forEach(el => {
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); gateGoEl.click(); }
+    });
+  });
+
+  window.addEventListener('online', () => refreshFromCloud(true));
+  window.addEventListener('offline', () => setCloudStatus('offline'));
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && creds) refreshFromCloud(true);
+  });
+
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  loadCreds();
+  if (creds) {
+    bootAdmin();
+  } else {
+    showGate();
+  }
+})();
+</script>
+
+</body>
+</html>
