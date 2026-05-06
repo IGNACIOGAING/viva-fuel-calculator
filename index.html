@@ -1068,14 +1068,14 @@
 
           <div class="field" id="f-density">
             <label for="density">Density
-              <span class="hint">— from ground handler · 0.750–0.850</span>
+              <span class="hint">— from ground handler · 0.770–0.840</span>
             </label>
             <div class="input-wrap">
               <input id="density" type="text" inputmode="decimal"
                      autocomplete="off" placeholder="0.793" maxlength="5" />
               <span class="unit">kg/L</span>
             </div>
-            <div class="field-error" data-default="Density must be between 0.750 and 0.850 kg/L (Jet A1).">Density must be between 0.750 and 0.850 kg/L (Jet A1).</div>
+            <div class="field-error" data-default="Density must be between 0.770 and 0.840 kg/L (Jet A1).">Density must be between 0.770 and 0.840 kg/L (Jet A1).</div>
           </div>
 
           <div class="field" id="f-fob">
@@ -1455,11 +1455,11 @@
   // ====================== Live calc ======================
   // Reglas de formato para los inputs numéricos:
   //  - FR / FOB: enteros 0..99,999. Mostramos con separador de miles (2,500).
-  //  - Density:  decimal 0.750..0.850, hasta 3 decimales, con cero inicial.
+  //  - Density:  decimal 0.770..0.840, hasta 3 decimales, con cero inicial.
   const INT_MIN = 0;
   const INT_MAX = 99999;
-  const DENSITY_MIN = 0.750;
-  const DENSITY_MAX = 0.850;
+  const DENSITY_MIN = 0.770;
+  const DENSITY_MAX = 0.840;
   const DENSITY_RE  = /^0\.[0-9]{1,3}$/;
   const FLIGHT_RE   = /^[A-Z]{2,3}[0-9]{1,4}$/;
 
@@ -1578,7 +1578,7 @@
     return true;
   }
 
-  // -------- Density: 0.750 .. 0.850 con leading zero --------
+  // -------- Density: 0.770 .. 0.840 con leading zero --------
   densityEl.addEventListener('input', () => {
     // Permitir solo dígitos y un único punto. Limpiar caracteres ilegales.
     let v = densityEl.value.replace(/[^0-9.]/g, '');
@@ -1613,7 +1613,7 @@
       if (!DENSITY_RE.test(val)) return 'Use format 0.xxx (e.g. 0.812).';
       const n = parseFloat(val);
       if (!Number.isFinite(n) || n < DENSITY_MIN || n > DENSITY_MAX) {
-        return 'Must be between 0.750 and 0.850 kg/L.';
+        return 'Must be between 0.770 and 0.840 kg/L.';
       }
       return null;
     });
@@ -1689,7 +1689,7 @@
       ok = false;
     }
 
-    // 5) Density (decimal 0.750..0.850, con cero inicial)
+    // 5) Density (decimal 0.770..0.840, con cero inicial)
     const densityRaw = (densityEl.value || '').trim();
     if (!densityRaw) {
       setError('f-density', true, 'Density is required.');
@@ -1698,7 +1698,7 @@
       setError('f-density', true, 'Use format 0.xxx (e.g. 0.812).');
       ok = false;
     } else if (!Number.isFinite(density) || density < DENSITY_MIN || density > DENSITY_MAX) {
-      setError('f-density', true, 'Density must be between 0.750 and 0.850 kg/L.');
+      setError('f-density', true, 'Density must be between 0.770 and 0.840 kg/L.');
       ok = false;
     }
 
